@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rahul Kumar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: control-room console. Split hero with a live incident map, then a labelled left rail and one reading column. */
+:root {
+  --bg: #f7f4f1;
+  --surface: #ffffff;
+  --ink: #221a15;
+  --muted: #6a5d53;
+  --line: #e5dcd4;
+  --accent: #c2510a;
+  --signal: #c62828;
+  --grid: rgba(194,81,10,.08);
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16110e; --surface: #211915; --ink: #f0e8e2; --muted: #a8998e;
+    --line: #362a22; --accent: #f28a3c; --signal: #ff6b6b; --grid: rgba(242,138,60,.09);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16110e; --surface: #211915; --ink: #f0e8e2; --muted: #a8998e;
+  --line: #362a22; --accent: #f28a3c; --signal: #ff6b6b; --grid: rgba(242,138,60,.09);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 1rem/1.65 var(--f-body);
+  padding-inline: 20px; padding-block: 0 64px;
+}
+.wrap { max-width: 1060px; margin-inline: auto; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+p { margin: 0; }
+.mono { font-family: var(--f-mono); }
+.label { font: 500 .72rem/1.2 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+/* nav */
+nav {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+  padding-block: 20px; border-bottom: 1px solid var(--line);
+}
+nav .id { font: 600 .95rem var(--f-mono); }
+nav ul { display: flex; flex-wrap: wrap; gap: 6px 18px; list-style: none; margin: 0; padding: 0; }
+nav ul a { color: var(--muted); text-decoration: none; font-size: .92rem; }
+nav ul a:hover { color: var(--ink); }
+
+/* hero */
+.hero {
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 44px; align-items: center;
+  padding-block: 56px 48px;
+}
+.status {
+  display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px;
+  font: 500 .78rem var(--f-mono);
+  border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 999px;
+}
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--signal); animation: ping 2s infinite; }
+@keyframes ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--signal) 60%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+.hero h1 { font-size: clamp(2.5rem, 6vw, 4.2rem); font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+.hero h1 span { color: var(--accent); }
+.hero .role { font: 500 .95rem var(--f-mono); color: var(--muted); margin-top: 16px; }
+.hero p.lede { font-size: 1.1rem; color: var(--muted); max-width: 34rem; margin: 16px 0 26px; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn {
+  display: inline-flex; align-items: center; text-decoration: none;
+  font: 600 .95rem var(--f-body); padding: 11px 18px; border-radius: 8px; border: 1px solid var(--accent);
+}
+.btn.primary { background: var(--accent); color: var(--bg); }
+.btn.ghost { color: var(--accent); }
+
+.map {
+  position: relative; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  background: var(--surface); aspect-ratio: 4 / 3; max-width: 100%;
+}
+.map canvas { display: block; width: 100%; height: 100%; }
+.map .legend {
+  position: absolute; left: 12px; bottom: 12px; display: flex; gap: 6px 12px; flex-wrap: wrap;
+  font: 500 .7rem var(--f-mono); color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 88%, transparent); padding: 6px 10px; border-radius: 6px;
+}
+.map .legend b { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+.map .feed {
+  position: absolute; right: 12px; top: 12px; font: 400 .7rem/1.5 var(--f-mono); color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 88%, transparent); padding: 6px 10px; border-radius: 6px; max-width: 60%;
+}
+.map .feed b { color: var(--signal); font-weight: 500; }
+
+/* facts strip */
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin-bottom: 8px; }
+.facts div { padding: 16px 18px; border-left: 1px solid var(--line); min-width: 0; }
+.facts div:first-child { border-left: 0; }
+.facts strong { display: block; font: 600 1.05rem var(--f-display); margin-top: 4px; }
+
+/* sections */
+section { padding-block: 44px; border-top: 1px solid var(--line); display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 32px; }
+.wrap > .facts + section { border-top: 0; }
+section > header { padding-top: 8px; }
+section h2 { font-size: 1.7rem; font-weight: 600; margin-bottom: 20px; }
+.prose { max-width: 41rem; display: grid; gap: 14px; }
+
+/* experience */
+.jobs { display: grid; gap: 30px; }
+.job-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; margin-bottom: 10px; }
+.job-head h3 { font-size: 1.25rem; font-weight: 600; }
+.job-head .where { color: var(--muted); font-size: .92rem; }
+.job-head time { font: 400 .85rem var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+ul.points { margin: 0; padding-left: 1.1rem; display: grid; gap: 8px; max-width: 46rem; }
+ul.points li::marker { color: var(--accent); }
+
+/* projects */
+.projects { display: grid; gap: 20px; }
+.project { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 26px; }
+.project h3 { font-size: 1.3rem; font-weight: 600; }
+.project .stack { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 18px; }
+.project .summary { color: var(--muted); margin-bottom: 18px; max-width: 44rem; }
+.features { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 28px; }
+.features li { min-width: 0; }
+.features strong { display: block; font-weight: 600; margin-bottom: 2px; }
+.features span { color: var(--muted); font-size: .94rem; }
+
+/* skills */
+.skills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px 24px; }
+.skills > div { min-width: 0; }
+.skills h3 { font: 500 .72rem var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 400 .82rem var(--f-mono); padding: 4px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+
+/* education & awards */
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.pair article { border-top: 2px solid var(--accent); padding-top: 14px; min-width: 0; }
+.pair h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
+.pair p { color: var(--muted); font-size: .95rem; }
+.pair .award { border-top-color: var(--signal); }
+
+/* contact */
+.contact-rows { display: grid; gap: 10px; max-width: 36rem; }
+.row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.row .k { width: 84px; }
+.row .v { font-family: var(--f-mono); font-size: .9rem; overflow-wrap: anywhere; min-width: 0; flex: 1; }
+.copy { font: 500 .78rem var(--f-mono); background: transparent; color: var(--accent); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+
+footer { padding-top: 28px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; padding-block: 36px; }
+  section { grid-template-columns: 1fr; gap: 8px; }
+  .skills { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .features, .pair { grid-template-columns: 1fr; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .facts div:nth-child(3) { border-left: 0; }
+  .facts div:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 480px) {
+  .skills { grid-template-columns: 1fr; }
+  .project { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .status i { animation: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <span class="id">rahul.kumar</span>
+    <ul>
+      <li><a href="#experience">Experience</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <div class="hero">
+    <div>
+      <div class="status"><i></i> Full Stack Developer at Trinity Mobility · Bengaluru</div>
+      <h1>Rahul Kumar builds <span>real-time systems</span> for fire emergency control rooms.</h1>
+      <p class="role">Java · Spring Boot · Angular · Kafka · Microservices</p>
+      <p class="lede">I build full-stack web applications for clients in the UAE, Egypt and India. My main work is a fire emergency command and control system, with live incident updates, GIS maps and secure APIs.</p>
+      <div class="cta">
+        <a class="btn primary" href="#projects">See my projects</a>
+        <a class="btn ghost" href="#contact">Contact me</a>
+      </div>
+    </div>
+    <div class="map" aria-label="Animated map of fire vehicles responding to incidents">
+      <canvas id="map"></canvas>
+      <div class="feed" id="feed"><b>INC-2041</b> backup requested<br>2 units en route</div>
+      <div class="legend">
+        <span><b style="background:var(--accent)"></b>Fire vehicle</span>
+        <span><b style="background:var(--signal)"></b>Live incident</span>
+        <span><b style="background:var(--ink)"></b>Station</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="facts">
+    <div><span class="label">Role</span><strong>Associate Software Engineer</strong></div>
+    <div><span class="label">Clients</span><strong>UAE · Egypt · India</strong></div>
+    <div><span class="label">Recognition</span><strong>Star Performer Award</strong></div>
+    <div><span class="label">Degree</span><strong>B.Tech ECE · 8.02 CGPA</strong></div>
+  </div>
+
+  <section id="about">
+    <header><span class="label">About</span></header>
+    <div class="prose">
+      <h2>Back end, front end, and the live link between them</h2>
+      <p>I'm an Associate Software Engineer at Trinity Mobility. I work across the whole stack: Spring Boot microservices and Kafka pipelines on the back end, and Angular screens with GIS maps on the front end.</p>
+      <p>I care about event-driven design, fast SQL on large datasets, and application security. I work in Agile/Scrum teams and ship code with thorough tests.</p>
+    </div>
+  </section>
+
+  <section id="experience">
+    <header><span class="label">Experience</span></header>
+    <div>
+      <h2>Where I've worked</h2>
+      <div class="jobs">
+        <article>
+          <div class="job-head">
+            <div><h3>Full Stack Developer</h3><span class="where">Trinity Mobility · Bengaluru, India</span></div>
+            <time>Aug 2025 – Present</time>
+          </div>
+          <ul class="points">
+            <li>Designed and maintain Core Java and Spring Boot microservices, using clean code and SOLID principles.</li>
+            <li>Built operator screens for a fire emergency command and control system (Angular + Spring Boot): live incident alerts, Request Backup, map-based response and readiness monitoring.</li>
+            <li>Built reusable, framework-agnostic Web Components and dynamic Angular UI modules shared across teams.</li>
+            <li>Designed real-time Kafka event pipelines and an alerting service for high-throughput incident notification.</li>
+            <li>Tuned Hibernate mappings, HQL and raw SQL on large production datasets to cut database round-trips and speed up reports.</li>
+            <li>Added IDOR protection and HMAC-SHA256 API checksum validation. Wrote JUnit tests across the microservices and Jasmine tests for Angular components.</li>
+            <li>Ran JMeter load tests and fixed the bottlenecks they found.</li>
+          </ul>
+        </article>
+        <article>
+          <div class="job-head">
+            <div><h3>Software Developer Intern</h3><span class="where">Trinity Mobility · Bengaluru, India</span></div>
+            <time>Mar 2025 – Aug 2025</time>
+          </div>
+          <ul class="points">
+            <li>Built and tested back-end services in Core Java and Spring Boot to production coding standards.</li>
+            <li>Built reusable Web Components and Angular UI modules that improved front-end load performance.</li>
+            <li>Worked with QA, DevOps and product teams to diagnose and fix production incidents.</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <header><span class="label">Projects</span></header>
+    <div>
+      <h2>Key projects</h2>
+      <div class="projects">
+        <article class="project">
+          <span class="label">2025 · ICCC</span>
+          <h3>Command &amp; Control System for Fire Emergency</h3>
+          <div class="stack"><span class="chip">Angular</span><span class="chip">Spring Boot</span><span class="chip">WebSockets</span><span class="chip">GIS Maps</span><span class="chip">Hibernate</span><span class="chip">SQL</span></div>
+          <p class="summary">A control-room system that operators use to track fire incidents and send fire vehicles to the scene.</p>
+          <ul class="features">
+            <li><strong>Request Backup</strong><span>Operators can ask for extra vehicles or teams for an ongoing incident. Each request is linked to the original incident, can be cancelled, and is fully logged.</span></li>
+            <li><strong>Live updates</strong><span>New incidents, status changes and vehicle locations arrive over WebSockets, and the connection reconnects itself after network drops.</span></li>
+            <li><strong>Map views</strong><span>Incidents, vehicle tracking, and the nearest fire station with its arrival time.</span></li>
+            <li><strong>Security</strong><span>HMAC-SHA256 checksums reject tampered API data. Session details are encrypted, and idle users are logged out.</span></li>
+            <li><strong>Readiness screens</strong><span>Screens that show which units and stations are ready to respond, covered by Jasmine tests.</span></li>
+          </ul>
+        </article>
+        <article class="project">
+          <span class="label">2025</span>
+          <h3>Angular Component Library &amp; Microservices Platform</h3>
+          <div class="stack"><span class="chip">Angular</span><span class="chip">Spring Boot</span><span class="chip">Web Components</span><span class="chip">Hibernate</span></div>
+          <p class="summary">Shared UI building blocks and back-end services used by several product teams.</p>
+          <ul class="features">
+            <li><strong>Component library</strong><span>Designed and published reusable, framework-agnostic Web Components and Angular modules that standardise UI across teams.</span></li>
+            <li><strong>Microservices</strong><span>Spring Boot services on Spring Data JPA and Hibernate, with tuned entity mappings for data flow between services.</span></li>
+            <li><strong>Testing</strong><span>Jasmine unit tests for every front-end component, plus JMeter load tests against simulated production traffic.</span></li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <header><span class="label">Skills</span></header>
+    <div>
+      <h2>Technical skills</h2>
+      <div class="skills">
+        <div><h3>Languages</h3><div class="chips"><span class="chip">Java</span><span class="chip">SQL</span><span class="chip">JavaScript</span><span class="chip">TypeScript</span><span class="chip">HTML5</span><span class="chip">CSS3</span></div></div>
+        <div><h3>Back end</h3><div class="chips"><span class="chip">Spring Boot</span><span class="chip">Spring Core</span><span class="chip">Spring MVC</span><span class="chip">Spring Data JPA</span><span class="chip">Spring ORM</span><span class="chip">Spring DAO</span><span class="chip">Spring Security</span><span class="chip">Hibernate</span><span class="chip">JDBC</span></div></div>
+        <div><h3>Front end</h3><div class="chips"><span class="chip">Angular</span><span class="chip">RxJS</span><span class="chip">Web Components</span><span class="chip">Responsive UI</span><span class="chip">OpenLayers</span><span class="chip">GeoServer</span></div></div>
+        <div><h3>Messaging &amp; real-time</h3><div class="chips"><span class="chip">Apache Kafka</span><span class="chip">Redis</span><span class="chip">WebSockets</span><span class="chip">STOMP / SockJS</span></div></div>
+        <div><h3>Security</h3><div class="chips"><span class="chip">HMAC-SHA256</span><span class="chip">AES encryption</span><span class="chip">IDOR protection</span><span class="chip">SAML SSO</span><span class="chip">Session timeout</span></div></div>
+        <div><h3>Testing &amp; QA</h3><div class="chips"><span class="chip">JUnit</span><span class="chip">Mockito</span><span class="chip">Jasmine</span><span class="chip">Karma</span><span class="chip">Postman</span><span class="chip">JMeter</span><span class="chip">SonarQube</span></div></div>
+        <div><h3>DevOps &amp; tools</h3><div class="chips"><span class="chip">Git</span><span class="chip">GitHub</span><span class="chip">GitLab CI</span><span class="chip">Maven</span><span class="chip">Docker</span><span class="chip">Tomcat</span><span class="chip">VS Code</span><span class="chip">Eclipse</span><span class="chip">SSMS</span></div></div>
+        <div><h3>Design patterns</h3><div class="chips"><span class="chip">Singleton</span><span class="chip">Factory</span><span class="chip">Microservices</span></div></div>
+        <div><h3>JVM</h3><div class="chips"><span class="chip">GC tuning</span><span class="chip">Memory optimisation</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="education">
+    <header><span class="label">Education &amp; awards</span></header>
+    <div>
+      <h2>Education and recognition</h2>
+      <div class="pair">
+        <article>
+          <span class="label">Jun 2020 – Jun 2024</span>
+          <h3>B.Tech, Electronics and Communication Engineering</h3>
+          <p>Gurukul Kangri University, Haridwar · CGPA 8.02 / 10</p>
+        </article>
+        <article class="award">
+          <span class="label">Award · Trinity Mobility</span>
+          <h3>Star Performer Award</h3>
+          <p>For dedication, quality delivery and technical contribution on high-priority projects.</p>
+        </article>
+        <article>
+          <span class="label">Certification · JSpiders</span>
+          <h3>Full Stack Java Development</h3>
+          <p>HTML, CSS, JavaScript, SQL, Spring, Spring MVC, JDBC, Hibernate, Spring Boot.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <header><span class="label">Contact</span></header>
+    <div>
+      <h2>Get in touch</h2>
+      <div class="contact-rows">
+        <div class="row"><span class="label k">Email</span><span class="v" id="email">Rky881229@gmail.com</span><button class="copy" type="button" data-copy="email">Copy</button></div>
+        <div class="row"><span class="label k">LinkedIn</span><a class="v" href="https://linkedin.com/in/rahul-kumar">linkedin.com/in/rahul-kumar</a></div>
+        <div class="row"><span class="label k">Location</span><span class="v">Bengaluru, Karnataka</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 Rahul Kumar</span>
+    <span class="mono">Associate Software Engineer · Bengaluru</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var el = document.getElementById(b.dataset.copy);
+      var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); };
+      var select = function () { var r = document.createRange(); r.selectNodeContents(el); var s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+      try { navigator.clipboard.writeText(el.textContent).then(done, select); } catch (e) { select(); }
+    });
+  });
+
+  var feedMsgs = [
+    '<b>INC-2041</b> backup requested<br>2 units en route',
+    '<b>INC-2042</b> new incident<br>nearest station: 4 min',
+    '<b>INC-2039</b> status: contained<br>1 unit returning'
+  ];
+  var feed = document.getElementById('feed'), fi = 0;
+
+  var c = document.getElementById('map'), ctx = c.getContext('2d');
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W, H;
+  function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+  function size() {
+    var dpr = window.devicePixelRatio || 1, r = c.getBoundingClientRect(); W = r.width; H = r.height;
+    c.width = W * dpr; c.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  var routes = [
+    [[.08,.82],[.25,.66],[.42,.68],[.6,.47]],
+    [[.12,.18],[.28,.32],[.35,.5]],
+    [[.9,.9],[.78,.62],[.72,.4],[.75,.24]],
+    [[.12,.18],[.3,.12],[.52,.2],[.75,.24]]
+  ];
+  var stations = [[.08,.82],[.12,.18],[.9,.9]];
+  var incidents = [[.6,.47],[.35,.5],[.75,.24]];
+  var units = [{r:0,t:.2,s:.0012},{r:1,t:.5,s:.0016},{r:2,t:.1,s:.001},{r:3,t:.6,s:.0009}];
+  function at(route, t) {
+    var n = route.length - 1, f = t * n, i = Math.min(Math.floor(f), n - 1), k = f - i, a = route[i], b = route[i + 1];
+    return [(a[0] + (b[0] - a[0]) * k) * W, (a[1] + (b[1] - a[1]) * k) * H];
+  }
+  var tick = 0;
+  function draw() {
+    var grid = css('--grid'), line = css('--line'), acc = css('--accent'), sig = css('--signal'), surf = css('--surface'), ink = css('--ink');
+    ctx.fillStyle = surf; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = grid; ctx.lineWidth = 1;
+    for (var x = 0; x < W; x += 28) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (var y = 0; y < H; y += 28) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    ctx.strokeStyle = line; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    routes.forEach(function (r) { ctx.beginPath(); r.forEach(function (p, i) { ctx[i ? 'lineTo' : 'moveTo'](p[0] * W, p[1] * H); }); ctx.stroke(); });
+    stations.forEach(function (s) { ctx.fillStyle = ink; ctx.fillRect(s[0] * W - 6, s[1] * H - 6, 12, 12); });
+    incidents.forEach(function (a, i) {
+      var ph = ((tick / 90) + i / 3) % 1;
+      ctx.beginPath(); ctx.arc(a[0] * W, a[1] * H, 6 + ph * 18, 0, 7);
+      ctx.strokeStyle = sig; ctx.globalAlpha = reduce ? .4 : 1 - ph; ctx.lineWidth = 2; ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(a[0] * W, a[1] * H, 4.5, 0, 7); ctx.fillStyle = sig; ctx.fill();
+    });
+    units.forEach(function (u) {
+      if (!reduce) { u.t += u.s; if (u.t > 1) u.t = 0; }
+      ctx.strokeStyle = acc; ctx.lineWidth = 2.5; ctx.globalAlpha = .45; ctx.beginPath();
+      for (var k = 0; k <= 12; k++) { var p = at(routes[u.r], Math.max(0, u.t - .12 + k * .12 / 12)); ctx[k ? 'lineTo' : 'moveTo'](p[0], p[1]); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+      var q = at(routes[u.r], u.t);
+      ctx.beginPath(); ctx.arc(q[0], q[1], 5.5, 0, 7); ctx.fillStyle = acc; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = surf; ctx.stroke();
+    });
+    if (!reduce && tick % 240 === 239) { fi = (fi + 1) % feedMsgs.length; feed.innerHTML = feedMsgs[fi]; }
+    tick++;
+    if (!reduce) requestAnimationFrame(draw);
+  }
+  size(); draw();
+  addEventListener('resize', function () { size(); if (reduce) draw(); });
+})();
+</script>
+</body>
+</html>
