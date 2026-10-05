@@ -1585,7 +1585,12 @@
               LinkedIn
             </span>
 
-            <span class="v" id="linkedin">
+            <span class="v">
+              LinkedIn
+            </span>
+
+            <!-- Actual URL is hidden -->
+            <span id="linkedin" hidden>
               https://www.linkedin.com/in/rahul-kumar-966283266
             </span>
 
@@ -1673,20 +1678,33 @@
          DARK / LIGHT MODE
          ===================================================== */
 
-      var themeToggle = document.getElementById('themeToggle');
+      var themeToggle =
+        document.getElementById('themeToggle');
 
-      var root = document.documentElement;
+      var root =
+        document.documentElement;
 
 
-      var savedTheme = localStorage.getItem('theme');
+      var savedTheme =
+        localStorage.getItem('theme');
 
-      if (savedTheme === 'dark' || savedTheme === 'light') {
 
-        root.setAttribute('data-theme', savedTheme);
+      if (
+        savedTheme === 'dark' ||
+        savedTheme === 'light'
+      ) {
+
+        root.setAttribute(
+          'data-theme',
+          savedTheme
+        );
 
       } else {
 
-        root.setAttribute('data-theme', 'light');
+        root.setAttribute(
+          'data-theme',
+          'light'
+        );
 
       }
 
@@ -1793,57 +1811,90 @@
                 element.textContent.trim();
 
 
-              var done = function () {
+              function copied() {
 
-                button.textContent = 'Copied';
+                button.textContent =
+                  'Copied';
 
 
                 setTimeout(
                   function () {
 
-                    button.textContent = 'Copy';
+                    button.textContent =
+                      'Copy';
 
                   },
                   1500
                 );
 
-              };
+              }
 
 
-              var select = function () {
+              function failed() {
 
-                var range =
-                  document.createRange();
-
-
-                range.selectNodeContents(element);
+                button.textContent =
+                  'Failed';
 
 
-                var selection =
-                  getSelection();
+                setTimeout(
+                  function () {
+
+                    button.textContent =
+                      'Copy';
+
+                  },
+                  1500
+                );
+
+              }
 
 
-                selection.removeAllRanges();
-
-                selection.addRange(range);
-
-              };
-
-
-              try {
+              if (
+                navigator.clipboard &&
+                window.isSecureContext
+              ) {
 
                 navigator.clipboard
                   .writeText(text)
-                  .then(done)
-                  .catch(function () {
+                  .then(copied)
+                  .catch(failed);
 
-                    select();
+              } else {
 
-                  });
+                var textarea =
+                  document.createElement('textarea');
 
-              } catch (e) {
+                textarea.value = text;
 
-                select();
+                textarea.style.position =
+                  'fixed';
+
+                textarea.style.opacity =
+                  '0';
+
+                document.body.appendChild(
+                  textarea
+                );
+
+                textarea.select();
+
+                try {
+
+                  document.execCommand(
+                    'copy'
+                  );
+
+                  copied();
+
+                } catch (e) {
+
+                  failed();
+
+                }
+
+                document.body.removeChild(
+                  textarea
+                );
 
               }
 
@@ -1920,9 +1971,11 @@
         H = r.height;
 
 
-        c.width = W * dpr;
+        c.width =
+          W * dpr;
 
-        c.height = H * dpr;
+        c.height =
+          H * dpr;
 
 
         ctx.setTransform(
