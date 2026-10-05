@@ -762,6 +762,12 @@
       cursor: pointer;
     }
 
+    .copy:hover {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
     /* =====================================================
        FOOTER
        ===================================================== */
@@ -1549,6 +1555,8 @@
 
         <div class="contact-rows">
 
+          <!-- EMAIL -->
+
           <div class="row">
 
             <span class="label k">
@@ -1569,20 +1577,29 @@
           </div>
 
 
+          <!-- LINKEDIN -->
+
           <div class="row">
 
             <span class="label k">
               LinkedIn
             </span>
 
-            <a
-              class="v"
-              href="https://www.linkedin.com/in/rahul-kumar-966283266">
-              linkedin.com/in/rahul-kumar
-            </a>
+            <span class="v" id="linkedin">
+              https://www.linkedin.com/in/rahul-kumar-966283266
+            </span>
+
+            <button
+              class="copy"
+              type="button"
+              data-copy="linkedin">
+              Copy
+            </button>
 
           </div>
 
+
+          <!-- LOCATION -->
 
           <div class="row">
 
@@ -1596,6 +1613,8 @@
 
           </div>
 
+
+          <!-- MOBILE -->
 
           <div class="row">
 
@@ -1659,15 +1678,6 @@
       var root = document.documentElement;
 
 
-      /*
-       * Get saved theme.
-       *
-       * If the user has already selected a theme,
-       * use that theme.
-       *
-       * Otherwise start with light mode.
-       */
-
       var savedTheme = localStorage.getItem('theme');
 
       if (savedTheme === 'dark' || savedTheme === 'light') {
@@ -1680,10 +1690,6 @@
 
       }
 
-
-      /*
-       * Update the button icon.
-       */
 
       function updateThemeIcon() {
 
@@ -1717,10 +1723,6 @@
       updateThemeIcon();
 
 
-      /*
-       * Toggle dark/light mode.
-       */
-
       themeToggle.addEventListener(
         'click',
         function () {
@@ -1730,10 +1732,6 @@
 
 
           if (currentTheme === 'dark') {
-
-            /*
-             * DARK → LIGHT
-             */
 
             root.setAttribute(
               'data-theme',
@@ -1746,10 +1744,6 @@
             );
 
           } else {
-
-            /*
-             * LIGHT → DARK
-             */
 
             root.setAttribute(
               'data-theme',
@@ -1766,12 +1760,6 @@
 
           updateThemeIcon();
 
-
-          /*
-           * Redraw the map so that the
-           * canvas uses the new theme colors.
-           */
-
           draw();
 
         }
@@ -1779,32 +1767,41 @@
 
 
       /* =====================================================
-         COPY EMAIL / MOBILE
+         COPY EMAIL / LINKEDIN / MOBILE
          ===================================================== */
 
       document
         .querySelectorAll('[data-copy]')
-        .forEach(function (b) {
+        .forEach(function (button) {
 
-          b.addEventListener(
+          button.addEventListener(
             'click',
             function () {
 
-              var el =
+              var element =
                 document.getElementById(
-                  b.dataset.copy
+                  button.dataset.copy
                 );
+
+
+              if (!element) {
+                return;
+              }
+
+
+              var text =
+                element.textContent.trim();
 
 
               var done = function () {
 
-                b.textContent = 'Copied';
+                button.textContent = 'Copied';
 
 
                 setTimeout(
                   function () {
 
-                    b.textContent = 'Copy';
+                    button.textContent = 'Copy';
 
                   },
                   1500
@@ -1815,30 +1812,34 @@
 
               var select = function () {
 
-                var r =
+                var range =
                   document.createRange();
 
 
-                r.selectNodeContents(el);
+                range.selectNodeContents(element);
 
 
-                var s =
+                var selection =
                   getSelection();
 
 
-                s.removeAllRanges();
+                selection.removeAllRanges();
 
-                s.addRange(r);
+                selection.addRange(range);
 
               };
 
 
               try {
 
-                navigator
-                  .clipboard
-                  .writeText(el.textContent)
-                  .then(done, select);
+                navigator.clipboard
+                  .writeText(text)
+                  .then(done)
+                  .catch(function () {
+
+                    select();
+
+                  });
 
               } catch (e) {
 
@@ -2085,9 +2086,7 @@
           css('--ink');
 
 
-        /*
-         * Background
-         */
+        /* Background */
 
         ctx.fillStyle = surf;
 
@@ -2099,9 +2098,7 @@
         );
 
 
-        /*
-         * Grid
-         */
+        /* Grid */
 
         ctx.strokeStyle = grid;
 
@@ -2142,9 +2139,7 @@
         }
 
 
-        /*
-         * Routes
-         */
+        /* Routes */
 
         ctx.strokeStyle = line;
 
@@ -2183,9 +2178,7 @@
         );
 
 
-        /*
-         * Stations
-         */
+        /* Stations */
 
         stations.forEach(
           function (s) {
@@ -2209,9 +2202,7 @@
         );
 
 
-        /*
-         * Incidents
-         */
+        /* Incidents */
 
         incidents.forEach(
           function (a, i) {
@@ -2284,9 +2275,7 @@
         );
 
 
-        /*
-         * Moving vehicles
-         */
+        /* Moving vehicles */
 
         units.forEach(
           function (u) {
@@ -2388,9 +2377,7 @@
         );
 
 
-        /*
-         * Feed messages
-         */
+        /* Feed messages */
 
         if (
           !reduce &&
@@ -2420,18 +2407,14 @@
       }
 
 
-      /*
-       * Initial map rendering
-       */
+      /* Initial map rendering */
 
       size();
 
       draw();
 
 
-      /*
-       * Resize map
-       */
+      /* Resize map */
 
       addEventListener(
         'resize',
